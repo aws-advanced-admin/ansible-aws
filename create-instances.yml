@@ -1,0 +1,29 @@
+# prerequisites:
+#   ansible-galaxy collection install amazon.aws:6.5.4
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Create AWS EC2 instance
+      register: ec2
+      amazon.aws.ec2_instance:
+        image: 
+          id: ami-05edf2d87fdbd91c1
+        region: eu-west-1
+        instance_type: t2.micro
+        key_name: rsakey
+        network:
+          assign_public_ip: true
+        security_group: "{{ security_group }}"
+        tags:
+          Name: hello-ansible
+          env: DEV
+          role: APP
+    - name: Show instance creation results
+      ansible.builtin.debug:
+        msg: "{{ ec2 }}"
+
+
