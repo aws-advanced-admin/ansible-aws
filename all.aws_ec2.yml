@@ -1,0 +1,9 @@
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - eu-west-1
+keyed_groups:
+  - key: tags.env
+    separator: 'env_'
+  - key: tags.role
+    separator: 'role_'
