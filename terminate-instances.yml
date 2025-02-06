@@ -1,0 +1,18 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Terminate AWS EC2 instances
+      register: ec2
+      amazon.aws.ec2_instance:
+        state: terminated
+        filters:
+          instance-state-name: running
+    - name: Show instance creation results
+      ansible.builtin.debug:
+        msg: "{{ ec2 }}"
+
+
