@@ -14,3 +14,7 @@
         name: nginx
         state: started
         enabled: true
+    - name: deploy webpage
+      ansible.builtin.copy:
+        src: files/index.html
+        dest: /usr/share/nginx/html/
