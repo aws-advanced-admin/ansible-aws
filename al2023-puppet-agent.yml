@@ -1,0 +1,50 @@
+# run as:
+#   ansible-playbook -i all.aws_ec2.yml al2023-puppet-agent.yml
+---
+- hosts: puppet_AGENT
+  remote_user: ec2-user
+  become: true
+  become_user: root
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Add repository
+      ansible.builtin.yum_repository:
+        name: puppet
+        description: puppetlabs repo
+        file: puppet-release
+        baseurl: http://yum.puppet.com/puppet/amazon/2023/$basearch
+        gpgkey: https://yum.puppet.com/RPM-GPG-KEY-puppet
+    - name: Install prerequisites
+      ansible.builtin.dnf:
+        name:
+          - wget
+          - lsof
+          - htop
+          - rsync
+          - puppet-agent
+        state: latest
+        update_cache: true
+    - name: Add server to /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^[0-9\.]* puppetserver'
+        line: "{{ puppet_server }} puppetserver"
+    - name: Create configuration file
+      ansible.builtin.template:
+        src: puppet.conf.j2
+        dest: /etc/puppetlabs/puppet/puppet.conf
+        mode: '0644'
+      notify: Restart puppet
+    - name: Enable service
+      ansible.builtin.service:
+        name: puppet
+        enabled: true
+        state: started
+  handlers:
+    - name: Restart puppet
+      ansible.builtin.service:
+        name: puppet
+        enabled: true
+        state: restarted
+
