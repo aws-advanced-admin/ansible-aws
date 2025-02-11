@@ -7,3 +7,5 @@ keyed_groups:
     separator: 'env_'
   - key: tags.role
     separator: 'role_'
+  - key: tags.puppet
+    separator: 'puppet_'
