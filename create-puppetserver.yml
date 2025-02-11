@@ -1,0 +1,35 @@
+# prerequisites:
+#   ansible-galaxy collection install amazon.aws:6.5.4
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - amazon.aws.ec2_instance:
+        image:
+          id: ami-0715d656023fe21b4
+        region: eu-west-1
+        instance_type: t2.small
+        key_name: rsakey
+        network:
+          assign_public_ip: true
+        security_group: "{{ security_group }}"
+        tags:
+          Name: puppetserver
+          env: DEV
+          role: ADMIN
+          puppet: SERVER
+      register: ec2
+    - ansible.builtin.debug:
+        msg: "{{ ec2 }}"
+    - name: wait for instance to listen on port 22
+      ansible.builtin.wait_for:
+        state: started
+        host: "{{ item.public_dns_name }}"
+        port: 22
+        delay: 15
+        sleep: 5
+        timeout: 300
+      loop: "{{ ec2.instances }}"
