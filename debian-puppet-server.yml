@@ -1,0 +1,59 @@
+---
+- hosts: puppet-server
+  remote_user: admin
+  become: true
+  become_user: root
+  vars:
+  tasks:
+    - name: Show config
+      debug:
+        var: ansible_facts
+      when: false
+    - name: Add server to /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1\s+localhost'
+        line: "127.0.0.1 localhost puppet"
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - wget
+          - curl
+          - lsof
+          - gpg
+          - git
+          - rsync
+          - htop
+    - name: Install repository key
+      ansible.builtin.apt_key:
+        url: https://apt.puppetlabs.com/pubkey.gpg
+    - name: Install release file
+      ansible.builtin.apt:
+        deb: https://apt.puppetlabs.com/puppet-release-bullseye.deb
+    - name: Install puppet-server
+      ansible.builtin.apt:
+        update_cache: true
+        name: puppetserver
+    - name: Set JVM memory size
+      lineinfile:
+        path: /etc/default/puppetserver
+        regexp: '^JAVA_ARGS='
+        line: 'JAVA_ARGS="-Xms512m -Xmx512m -Djruby.logger.class=com.puppetlabs.jruby_utils.jruby.Slf4jLogger"'
+      notify: Restart puppetserver
+    - name: Create configuration file
+      ansible.builtin.template:
+        src: puppetserver-puppet.conf.j2
+        dest: /etc/puppetlabs/puppet/puppet.conf
+        mode: '0644'
+      notify: Restart puppetserver
+    - name: Start puppetserver
+      service:
+        name: puppetserver
+        enabled: true
+        state: started
+  handlers:
+    - name: Restart puppetserver
+      service:
+        name: puppetserver
+        state: restarted
